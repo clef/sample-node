@@ -1,0 +1,21 @@
+<html>
+  <head>
+    <script type='text/javascript' src='https://clef.io/static/javascripts/clef.js'></script>
+    <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js'></script>
+  </head>
+  <body>
+    <% if (user) {%>
+      <h2>Welcome <%=user.email%></h2>
+      <pre>
+        <%=JSON.stringify(user)%>
+      </pre>
+    <%} else {%>
+      <h2>Sign in with Clef</h2>
+      <script type='text/javascript'
+      class='clef-button'
+      src='https://clef.io/v3/clef.js'
+      data-app-id='4f4baa300eae6a7532cc60d06b49e0b9'
+      data-redirect-url='http://localhost:4000/login'></script>
+    <%}%>
+  </body>
+</html>
