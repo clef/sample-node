@@ -7,6 +7,7 @@ var express = require('express')
   , http = require('http')
   , path = require('path')
   , request = require('request')
+  , crypto = require('crypto')
   , Sequelize = require('sequelize');
 
 var sequelize = new Sequelize('sample_app', 'username', 'password', {
@@ -81,13 +82,17 @@ app.use(function(req, res, next) {
 });
 
 var generateRandomStateParameter = function(session) {
-  var state = ['oas', Date.now().toString(36), Math.random().toString(36)].join('_');
+  var state = crypto.randomBytes(32).toString('base64');
+  // Make the base64 encoded string URL safe by replacing '+' and '/' with '-' and '_'
+  state = state.replace(/\+/g, '-').replace(/\//g, '_');
   session.state = state;
   return state;
 };
 
 var stateParameterIsValid = function(session, state) {
-    return state == session.state && session.state && session.state.length > 0;
+    stateIsValid = session.state && session.state.length > 0 && state == session.state;
+    delete session.state;
+    return stateIsValid;
 };
 
 /**
