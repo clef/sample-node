@@ -61,6 +61,8 @@ app.configure('development', function() {
 var APP_ID = '4f4baa300eae6a7532cc60d06b49e0b9',
     APP_SECRET = 'd0d0ba5ef23dc134305125627c45677c';
 
+// Pass your credentials to the ClefAPI constructor
+var clef = require('clef').initialize({appID: APP_ID, appSecret: APP_SECRET});
 /**
  * This middleware function is used to check whether the user has logged out
  * with Clef already, and if so, destroys their session in the browser,
@@ -127,32 +129,40 @@ app.get('/login', function(req, res) {
   }
 
   var code = req.param('code');
-
-  var authorizeURL = 'https://clef.io/api/v1/authorize';
-  var infoURL = 'https://clef.io/api/v1/info';
-  var form = {
-    app_id: APP_ID,
-    app_secret: APP_SECRET,
-    code: code
-  };
-
-  request.post({url: authorizeURL, form: form}, function(error, response, body) {
-    var token = JSON.parse(body)['access_token'];
-    request.get({url: infoURL, qs: {access_token: token}},
-      function(error, response, body) {
-        var userData = JSON.parse(body)['info'];
-
-        // Fetch a user given the `id` returned by Clef. If the user doesn't
-        // exist, it is created with the email address and `id` returned by Clef.
-        User.findOrCreate({where: {clefID: userData.id}, defaults: {email: userData.email}})
+  clef.getLoginInformation({code: code}, function(err, userInformation) {
+    if (err) {
+      // Handle the error
+      switch(err.type) {
+        case 'InvalidAppIDError':
+          console.log('Invalid app ID');
+          break;
+        case 'InvalidAppSecretError':
+          console.log('Invalid app secret');
+          break;
+        case 'InvalidOAuthCodeError':
+          console.log('Invalid OAuth code');
+          break;
+        case 'InvalidOAuthTokenError':
+          console.log('Invalid OAuth token exchange');
+          break;
+        default:
+          console.log('API error');
+          console.log(err);
+      }
+    } else {
+      var clefID = userInformation['clef_id'];
+      var email = userInformation['email'];
+      // Fetch a user given the `id` returned by Clef. If the user doesn't
+      // exist, it is created with the email address and `id` returned by Clef.
+      User.findOrCreate({where: {clefID: clefID}, defaults: {email: email}})
         .spread(function(user, created) {
-            req.session.user = {
-              id: user.id,
-              loggedInAt: Date.now()
-            };
-            res.redirect('/');
-        });
+          req.session.user = {
+            id: user.id,
+            loggedInAt: Date.now()
+          }
+        res.redirect('/');
       });
+    }
   });
 });
 
@@ -166,27 +176,17 @@ app.get('/login', function(req, res) {
  */
 app.post('/logout', function(req, res) {
   var token = req.param('logout_token');
-  var logoutURL = 'https://clef.io/api/v1/logout';
-  var form = {
-    app_id: APP_ID,
-    app_secret: APP_SECRET,
-    logout_token: token
-  };
-
-  request.post({url: logoutURL, form:form}, function(err, response, body) {
-    var response = JSON.parse(body);
-
-    if (response.success) {
-      User.find({where: {clefID: response.clef_id}}).then(function(user) {
+  clef.getLogoutInformation({logoutToken: token}, function(err, clefID){
+    if (err) {
+      console.log(err);
+    } else {
+      User.find({where: {clefID: clefID}}).then(function(user){
         user.updateAttributes({
           loggedOutAt: Date.now()
-        }).then(function () {
+        }).then(function() {
           res.send('bye');
         });
       });
-    } else {
-      console.log(body['error']);
-      res.send('bye');
     }
   });
 });
