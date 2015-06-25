@@ -146,7 +146,7 @@ app.use(function(req, res, next) {
 To run this sample app, clone the repo:
 
 ```
-$ git clone git@github.com:clef/sample-express.git
+$ git clone git@github.com:clef/sample-node.git
 ```
 
 Then install the dependencies and run on localhost.
