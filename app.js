@@ -150,7 +150,7 @@ app.get('/login', function(req, res) {
           console.log(err);
       }
     } else {
-      var clefID = userInformation['clef_id'];
+      var clefID = userInformation['id'];
       var email = userInformation['email'];
       // Fetch a user given the `id` returned by Clef. If the user doesn't
       // exist, it is created with the email address and `id` returned by Clef.
