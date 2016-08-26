@@ -123,12 +123,12 @@ app.get('/login', function(req, res) {
   //
   // For more protection about the state parameter and CSRF, check out
   // http://docs.getclef.com/v1.0/docs/verifying-state-parameter
-  var state = req.param('state');
+  var state = req.query.state;
   if (!stateParameterIsValid(req.session, state)) {
       return res.status(403).send("Oops, the state parameter didn't match what was passed in to the Clef button.");
   }
 
-  var code = req.param('code');
+  var code = req.query.code;
   clef.getLoginInformation({code: code}, function(err, userInformation) {
     if (err) {
       // Handle the error
@@ -175,7 +175,7 @@ app.get('/login', function(req, res) {
  * For more info, see http://docs.getclef.com/v1.0/docs/database-logout
  */
 app.post('/logout', function(req, res) {
-  var token = req.param('logout_token');
+  var token = req.body.logout_token;
   clef.getLogoutInformation({logoutToken: token}, function(err, clefID){
     if (err) {
       console.log(err);
